@@ -44,6 +44,7 @@
 #include "fboss/lib/bsp/BspIOBus.h"
 #include "fboss/lib/bsp/BspTransceiverApi.h"
 #include "fboss/lib/bsp/icecube800bc/Icecube800bcBspPlatformMapping.h"
+#include "fboss/lib/bsp/icetea/IceteaBspPlatformMapping.h"
 #include "fboss/lib/bsp/janga800bic/Janga800bicBspPlatformMapping.h"
 #include "fboss/lib/bsp/meru400bfu/Meru400bfuBspPlatformMapping.h"
 #include "fboss/lib/bsp/meru400bia/Meru400biaBspPlatformMapping.h"
@@ -4400,6 +4401,12 @@ std::pair<std::unique_ptr<TransceiverI2CApi>, int> getTransceiverAPI() {
                                  .get();
       auto ioBus = std::make_unique<BspIOBus>(systemContainer);
       return std::make_pair(std::move(ioBus), 0);
+    } else if (FLAGS_platform == "icetea") {
+      auto systemContainer =
+          BspGenericSystemContainer<IceteaBspPlatformMapping>::getInstance()
+              .get();
+      auto ioBus = std::make_unique<BspIOBus>(systemContainer);
+      return std::make_pair(std::move(ioBus), 0);
     } else if (FLAGS_platform == "minipack3n") {
       auto systemContainer =
           BspGenericSystemContainer<Minipack3NBspPlatformMapping>::getInstance()
@@ -4471,6 +4478,12 @@ std::pair<std::unique_ptr<TransceiverI2CApi>, int> getTransceiverAPI() {
             .get();
     auto ioBus = std::make_unique<BspIOBus>(systemContainer);
     return std::make_pair(std::move(ioBus), 0);
+  } else if (mode == PlatformType::PLATFORM_ICETEA) {
+    auto systemContainer =
+        BspGenericSystemContainer<IceteaBspPlatformMapping>::getInstance()
+            .get();
+    auto ioBus = std::make_unique<BspIOBus>(systemContainer);
+    return std::make_pair(std::move(ioBus), 0);
   } else if (mode == PlatformType::PLATFORM_MINIPACK3N) {
     auto systemContainer =
         BspGenericSystemContainer<Minipack3NBspPlatformMapping>::getInstance()
@@ -4531,6 +4544,8 @@ getTransceiverPlatformAPI(TransceiverI2CApi* i2cBus) {
       mode = PlatformType::PLATFORM_TAHAN800BC;
     } else if (FLAGS_platform == "icecube800bc") {
       mode = PlatformType::PLATFORM_ICECUBE800BC;
+    } else if (FLAGS_platform == "icetea") {
+      mode = PlatformType::PLATFORM_ICETEA;
     }
   } else {
     // If the platform is not provided by the user then use current hardware's
