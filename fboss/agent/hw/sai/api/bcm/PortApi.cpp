@@ -469,4 +469,36 @@ SaiPortTraits::Attributes::AttributeShelEnable::operator()() {
   return std::nullopt;
 #endif
 }
+
+std::optional<sai_attr_id_t>
+SaiPortTraits::Attributes::AttributeArsLinkState::operator()() {
+#if defined(BRCM_SAI_SDK_GTE_13_0) && !defined(BRCM_SAI_SDK_GTE_14_0) && \
+    defined(BRCM_SAI_SDK_XGS)
+  return SAI_PORT_ATTR_ARS_LINK_STATE;
+#else
+  return std::nullopt;
+#endif
+}
+
+const std::vector<sai_stat_id_t>&
+SaiPortTraits::macTxDataQueueMinWatermarkStats() {
+#if defined(BRCM_SAI_SDK_DNX_GTE_12_0) && !defined(BRCM_SAI_SDK_DNX_GTE_13_0)
+  static const std::vector<sai_stat_id_t> stats{
+      SAI_PORT_STAT_MAC_TX_DATA_QUEUE_MIN_WM};
+#else
+  static const std::vector<sai_stat_id_t> stats;
+#endif
+  return stats;
+}
+
+const std::vector<sai_stat_id_t>&
+SaiPortTraits::macTxDataQueueMaxWatermarkStats() {
+#if defined(BRCM_SAI_SDK_DNX_GTE_12_0) && !defined(BRCM_SAI_SDK_DNX_GTE_13_0)
+  static const std::vector<sai_stat_id_t> stats{
+      SAI_PORT_STAT_MAC_TX_DATA_QUEUE_MAX_WM};
+#else
+  static const std::vector<sai_stat_id_t> stats;
+#endif
+  return stats;
+}
 } // namespace facebook::fboss

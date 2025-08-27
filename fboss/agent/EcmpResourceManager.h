@@ -61,10 +61,6 @@ class EcmpResourceManager : public PreUpdateStateModifier {
     return maxEcmpGroups_;
   }
 
-  const NextHopGroupInfo* getGroupInfo(
-      RouterID rid,
-      const folly::CIDRNetwork& nw) const;
-
   struct ConsolidationInfo {
     int maxPenalty() const;
     bool operator==(const ConsolidationInfo& other) const {
@@ -76,19 +72,37 @@ class EcmpResourceManager : public PreUpdateStateModifier {
   };
   using GroupIds2ConsolidationInfo =
       std::map<NextHopGroupIds, ConsolidationInfo>;
+  using GroupIds2ConsolidationInfoItr = GroupIds2ConsolidationInfo::iterator;
+  /*
+   * Test helper APIs. Used mainly in UTs. Not neccessarily opimized for
+   * non test code.
+   */
   std::optional<ConsolidationInfo> getMergeGroupConsolidationInfo(
       NextHopGroupId grpId) const;
   GroupIds2ConsolidationInfo getCandidateMergeConsolidationInfo(
       NextHopGroupId grpId) const;
   std::set<NextHopGroupId> getOptimalMergeGroupSet() const;
   std::map<NextHopGroupId, std::set<Prefix>> getGroupIdToPrefix() const;
+  const NextHopGroupInfo* getGroupInfo(
+      RouterID rid,
+      const folly::CIDRNetwork& nw) const;
+  NextHopGroupIds getMergedGids() const;
+  NextHopGroupIds getUnMergedGids() const;
+  /* Test helper API end */
 
  private:
+  GroupIds2ConsolidationInfoItr fixAndGetMergeGroupItr(
+      const NextHopGroupId newMemberGroup,
+      const RouteNextHopSet& mergedNhops);
+  void fixMergeItreators(
+      const NextHopGroupIds& newMergeSet,
+      GroupIds2ConsolidationInfoItr mitr,
+      const NextHopGroupIds& toIgnore);
   void nextHopGroupDeleted(NextHopGroupId groupId);
   bool pruneFromCandidateMerges(const NextHopGroupIds& groupIds);
   bool pruneFromMergedGroups(const NextHopGroupIds& groupIds);
   template <typename AddrT>
-  bool routesEqual(
+  bool routeFwdEqual(
       const std::shared_ptr<Route<AddrT>>& oldRoute,
       const std::shared_ptr<Route<AddrT>>& newRoute) const;
 
@@ -167,11 +181,15 @@ class EcmpResourceManager : public PreUpdateStateModifier {
       uint32_t canReclaim) const;
   void reclaimBackupGroups(
       const std::vector<std::shared_ptr<NextHopGroupInfo>>& toReclaimSorted,
-      const std::unordered_set<NextHopGroupId>& groupIdsToReclaim,
+      const NextHopGroupIds& groupIdsToReclaimIn,
       InputOutputState* inOutState);
   void reclaimMergeGroups(
       const std::vector<std::shared_ptr<NextHopGroupInfo>>& toReclaimSorted,
-      const std::unordered_set<NextHopGroupId>& groupIdsToReclaim,
+      const NextHopGroupIds& groupIdsToReclaim,
+      InputOutputState* inOutState);
+  void updateMergedGroups(
+      const std::set<NextHopGroupIds>& mergeSetsToUpdate,
+      const NextHopGroupIds& groupIdsToReclaim,
       InputOutputState* inOutState);
   void reclaimEcmpGroups(InputOutputState* inOutState);
   template <typename AddrT>
@@ -231,7 +249,11 @@ class EcmpResourceManager : public PreUpdateStateModifier {
   NextHopGroupId findNextAvailableId() const;
   ConsolidationInfo computeConsolidationInfo(
       const NextHopGroupIds& grpIds) const;
-  void computeCandidateMerges(const std::vector<NextHopGroupId>& groupIds);
+  template <std::forward_iterator ForwardIt>
+  void computeCandidateMerges(ForwardIt begin, ForwardIt end);
+  void computeCandidateMerges(const std::vector<NextHopGroupId>& gids) {
+    computeCandidateMerges(gids.begin(), gids.end());
+  }
 
   NextHops2GroupId nextHopGroup2Id_;
   StdRefMap<NextHopGroupId, NextHopGroupInfo> nextHopGroupIdToInfo_;
@@ -252,13 +274,13 @@ class NextHopGroupInfo {
  public:
   using NextHopGroupId = EcmpResourceManager::NextHopGroupId;
   using NextHopGroupItr = EcmpResourceManager::NextHops2GroupId::iterator;
-  using Groups2ConsolidationInfoItr =
+  using GroupIds2ConsolidationInfoItr =
       EcmpResourceManager::GroupIds2ConsolidationInfo::iterator;
   NextHopGroupInfo(
       NextHopGroupId id,
       NextHopGroupItr ngItr,
       bool isBackupEcmpGroupType = false,
-      std::optional<Groups2ConsolidationInfoItr> mergedGroupsToInfoItr =
+      std::optional<GroupIds2ConsolidationInfoItr> mergedGroupsToInfoItr =
           std::nullopt)
       : id_(id),
         ngItr_(ngItr),
@@ -283,10 +305,11 @@ class NextHopGroupInfo {
   void setIsBackupEcmpGroupType(bool isBackupEcmp) {
     isBackupEcmpGroupType_ = isBackupEcmp;
   }
-  void setMergedGroupInfoItr(std::optional<Groups2ConsolidationInfoItr> gitr) {
+  void setMergedGroupInfoItr(
+      std::optional<GroupIds2ConsolidationInfoItr> gitr) {
     mergedGroupsToInfoItr_ = gitr;
   }
-  std::optional<Groups2ConsolidationInfoItr> getMergedGroupInfoItr() const {
+  std::optional<GroupIds2ConsolidationInfoItr> getMergedGroupInfoItr() const {
     return mergedGroupsToInfoItr_;
   }
   const RouteNextHopSet& getNhops() const {
@@ -318,7 +341,7 @@ class NextHopGroupInfo {
   NextHopGroupId id_;
   NextHopGroupItr ngItr_;
   bool isBackupEcmpGroupType_{false};
-  std::optional<Groups2ConsolidationInfoItr> mergedGroupsToInfoItr_;
+  std::optional<GroupIds2ConsolidationInfoItr> mergedGroupsToInfoItr_;
   int routeUsageCount_{kInvalidRouteUsageCount};
 };
 

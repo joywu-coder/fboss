@@ -124,6 +124,9 @@ std::vector<StateDelta> BaseEcmpResourceManagerTest::consolidate(
         EXPECT_EQ(
             newRoute->getForwardInfo().getOverrideEcmpSwitchingMode(),
             origRoute->getForwardInfo().getOverrideEcmpSwitchingMode());
+        EXPECT_EQ(
+            newRoute->getForwardInfo().getOverrideNextHops(),
+            origRoute->getForwardInfo().getOverrideNextHops());
       }
     }
   }
@@ -520,7 +523,7 @@ void BaseEcmpResourceManagerTest::assertTargetState(
   }
 }
 
-void BaseEcmpResourceManagerTest::addOrUpdateRoute(
+std::vector<StateDelta> BaseEcmpResourceManagerTest::addOrUpdateRoute(
     const RoutePrefixV6& prefix6,
     const RouteNextHopSet& nhops) {
   auto newRoute = makeRoute(prefix6, nhops);
@@ -532,14 +535,16 @@ void BaseEcmpResourceManagerTest::addOrUpdateRoute(
     fib6->addNode(prefix6.str(), std::move(newRoute));
   }
   newState->publish();
-  consolidate(newState);
+  return consolidate(newState);
 }
 
-std::vector<StateDelta> BaseEcmpResourceManagerTest::rmRoute(
-    const RoutePrefixV6& prefix6) {
+std::vector<StateDelta> BaseEcmpResourceManagerTest::rmRoutes(
+    const std::vector<RoutePrefixV6>& prefix6s) {
   auto newState = state_->clone();
   auto fib6 = fib(newState);
-  fib6->removeNode(prefix6.str());
+  for (const auto& prefix6 : prefix6s) {
+    fib6->removeNode(prefix6.str());
+  }
   newState->publish();
   return consolidate(newState);
 }
@@ -554,6 +559,26 @@ std::set<RouteV6::Prefix> BaseEcmpResourceManagerTest::getPrefixesForGroups(
     }
   }
   return prefixes;
+}
+
+std::set<RouteV6::Prefix>
+BaseEcmpResourceManagerTest::getPrefixesWithoutOverrides() const {
+  std::set<RouteV6::Prefix> prefixes;
+  return getPrefixesForGroups(getGroupsWithoutOverrides());
+}
+
+EcmpResourceManager::NextHopGroupIds
+BaseEcmpResourceManagerTest::getGroupsWithoutOverrides() const {
+  EcmpResourceManager::NextHopGroupIds nonOverrideGids;
+  auto grpId2Prefixes = sw_->getEcmpResourceManager()->getGroupIdToPrefix();
+  for (const auto& [_, pfxs] : grpId2Prefixes) {
+    auto grpInfo = sw_->getEcmpResourceManager()->getGroupInfo(
+        pfxs.begin()->first, pfxs.begin()->second);
+    if (!grpInfo->hasOverrides()) {
+      nonOverrideGids.insert(grpInfo->getID());
+    }
+  }
+  return nonOverrideGids;
 }
 
 TEST_F(BaseEcmpResourceManagerTest, noFibsDelta) {

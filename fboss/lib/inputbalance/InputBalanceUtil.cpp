@@ -262,6 +262,19 @@ std::vector<std::string> getInterfaceDevicesInCluster(
   return intfDevices;
 }
 
+std::vector<std::string> getLayer2FabricDevicesInCluster(
+    const std::unordered_map<std::string, cfg::DsfNode>& nameToDsfNode) {
+  std::vector<std::string> layer2Devices;
+  for (const auto& [name, dsfNode] : nameToDsfNode) {
+    if (dsfNode.type() == cfg::DsfNodeType::FABRIC_NODE &&
+        dsfNode.fabricLevel().has_value() &&
+        dsfNode.fabricLevel().value() == 2) {
+      layer2Devices.emplace_back(name);
+    }
+  }
+  return layer2Devices;
+}
+
 std::map<std::string, std::string> getPortToNeighbor(
     const std::shared_ptr<MultiSwitchPortMap>& portMap) {
   std::map<std::string, std::string> portToNeighbor;
@@ -284,6 +297,21 @@ std::map<std::string, std::string> getPortToNeighbor(
     }
   }
   return portToNeighbor;
+}
+
+std::vector<std::string> filterPortsByDestination(
+    const std::vector<std::string>& allPorts,
+    const std::string& dstSwitchName,
+    const std::map<std::string, std::string>& portToNeighbor) {
+  std::vector<std::string> filteredPorts;
+  for (const auto& port : allPorts) {
+    auto neighborIter = portToNeighbor.find(port);
+    if (neighborIter != portToNeighbor.end() &&
+        neighborIter->second == dstSwitchName) {
+      filteredPorts.push_back(port);
+    }
+  }
+  return filteredPorts;
 }
 
 std::unordered_map<std::string, std::vector<std::string>>
@@ -605,6 +633,64 @@ std::vector<InputBalanceResult> checkInputBalanceDualStageCluster(
   }
 
   return inputBalanceResult;
+}
+
+std::vector<std::pair<std::string, InputBalanceDestType>>
+getSrcSwitchesToCheckInputBalance(
+    const std::string& dstSwitchName,
+    const std::map<int64_t, cfg::DsfNode>& dsfNodeMap) {
+  std::vector<std::pair<std::string, InputBalanceDestType>> result;
+
+  if (!isDualStage(dsfNodeMap)) {
+    // For single stage, return all fabric nodes with SINGLE_STAGE_FDSW_INTRA
+    for (const auto& [_, dsfNode] : dsfNodeMap) {
+      if (dsfNode.type() == cfg::DsfNodeType::FABRIC_NODE) {
+        result.emplace_back(
+            dsfNode.name().value(),
+            InputBalanceDestType::SINGLE_STAGE_FDSW_INTRA);
+      }
+    }
+    return result;
+  }
+
+  auto nameToDsfNode = switchNameToDsfNode(dsfNodeMap);
+
+  auto it = nameToDsfNode.find(dstSwitchName);
+  if (it == nameToDsfNode.end()) {
+    throw std::runtime_error("No DSF node found for " + dstSwitchName);
+  }
+  auto inputClusterId = it->second.clusterId();
+
+  if (!inputClusterId.has_value()) {
+    throw std::runtime_error(
+        "No cluster ID found for input DSF node: " + dstSwitchName);
+  }
+
+  for (const auto& [_, dsfNode] : dsfNodeMap) {
+    if (dsfNode.type() == cfg::DsfNodeType::FABRIC_NODE &&
+        dsfNode.fabricLevel().has_value()) {
+      auto switchName = dsfNode.name().value();
+
+      if (dsfNode.fabricLevel().value() == 1 &&
+          dsfNode.clusterId().has_value()) {
+        if (switchName == dstSwitchName) {
+          continue;
+        }
+
+        int clusterID = dsfNode.clusterId().value();
+        InputBalanceDestType destType = (clusterID == inputClusterId.value())
+            ? InputBalanceDestType::DUAL_STAGE_FDSW_INTRA
+            : InputBalanceDestType::DUAL_STAGE_FDSW_INTER;
+
+        result.emplace_back(switchName, destType);
+      } else if (dsfNode.fabricLevel().value() == 2) {
+        result.emplace_back(
+            switchName, InputBalanceDestType::DUAL_STAGE_SDSW_INTER);
+      }
+    }
+  }
+
+  return result;
 }
 
 } // namespace facebook::fboss::utility

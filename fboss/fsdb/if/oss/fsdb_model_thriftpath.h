@@ -1377,12 +1377,15 @@ class ChildThriftPath<::facebook::fboss::cfg::TransceiverConfigOverrideFactor, :
     Self
   >;
   using Children = fatal::tuple<std::pair<strings::transceiverPartNumber, Child<::facebook::fboss::cfg::TransceiverPartNumber, ::apache::thrift::type_class::enumeration, ::apache::thrift::type::enum_t<::facebook::fboss::cfg::TransceiverPartNumber>>>,
-std::pair<strings::applicationCode, Child<::facebook::fboss::SMFMediaInterfaceCode, ::apache::thrift::type_class::enumeration, ::apache::thrift::type::enum_t<::facebook::fboss::SMFMediaInterfaceCode>>>>;
+std::pair<strings::applicationCode, Child<::facebook::fboss::SMFMediaInterfaceCode, ::apache::thrift::type_class::enumeration, ::apache::thrift::type::enum_t<::facebook::fboss::SMFMediaInterfaceCode>>>,
+std::pair<strings::hostApplicationCode, Child<::facebook::fboss::ActiveCuHostInterfaceCode, ::apache::thrift::type_class::enumeration, ::apache::thrift::type::enum_t<::facebook::fboss::ActiveCuHostInterfaceCode>>>>;
   using ChildrenById = fatal::tuple<   std::pair<std::integral_constant<apache::thrift::field_id_t, 1>, Child<::facebook::fboss::cfg::TransceiverPartNumber, ::apache::thrift::type_class::enumeration, ::apache::thrift::type::enum_t<::facebook::fboss::cfg::TransceiverPartNumber>>>,
-   std::pair<std::integral_constant<apache::thrift::field_id_t, 2>, Child<::facebook::fboss::SMFMediaInterfaceCode, ::apache::thrift::type_class::enumeration, ::apache::thrift::type::enum_t<::facebook::fboss::SMFMediaInterfaceCode>>>>;
+   std::pair<std::integral_constant<apache::thrift::field_id_t, 2>, Child<::facebook::fboss::SMFMediaInterfaceCode, ::apache::thrift::type_class::enumeration, ::apache::thrift::type::enum_t<::facebook::fboss::SMFMediaInterfaceCode>>>,
+   std::pair<std::integral_constant<apache::thrift::field_id_t, 3>, Child<::facebook::fboss::ActiveCuHostInterfaceCode, ::apache::thrift::type_class::enumeration, ::apache::thrift::type::enum_t<::facebook::fboss::ActiveCuHostInterfaceCode>>>>;
   template <typename Name>
   using NameToId = fatal::tuple<std::pair<strings::transceiverPartNumber, std::integral_constant<apache::thrift::field_id_t, 1>>,
-std::pair<strings::applicationCode, std::integral_constant<apache::thrift::field_id_t, 2>>>::template type_of<Name>;
+std::pair<strings::applicationCode, std::integral_constant<apache::thrift::field_id_t, 2>>,
+std::pair<strings::hostApplicationCode, std::integral_constant<apache::thrift::field_id_t, 3>>>::template type_of<Name>;
 
   template <typename Name>
   using TypeFor = typename Children::template type_of<Name>;
@@ -1390,11 +1393,13 @@ std::pair<strings::applicationCode, std::integral_constant<apache::thrift::field
   
     STRUCT_CHILD_GETTERS(transceiverPartNumber, 1);
     STRUCT_CHILD_GETTERS(applicationCode, 2);
+    STRUCT_CHILD_GETTERS(hostApplicationCode, 3);
 
   template <apache::thrift::field_id_t __id>
   auto operator()(const std::integral_constant<apache::thrift::field_id_t, __id>&) {
     if constexpr (__id == 1) { return transceiverPartNumber(); }
     else if constexpr (__id == 2) { return applicationCode(); }
+    else if constexpr (__id == 3) { return hostApplicationCode(); }
   }
 
   template <typename T, T... Values>
@@ -23284,7 +23289,10 @@ std::pair<strings::egressGvoqWatermarkBytes_, ChildThriftPath<::std::map<::std::
 std::pair<strings::pgInCongestionDiscards_, ChildThriftPath<::std::map<::std::int16_t, ::std::int64_t>, ::facebook::fboss::fsdb::FsdbOperStatsRoot, Self>>,
 std::pair<strings::pfcDeadlockDetection_, Child<::std::int64_t, ::apache::thrift::type_class::integral, ::apache::thrift::type::i64_t>>,
 std::pair<strings::pfcDeadlockRecovery_, Child<::std::int64_t, ::apache::thrift::type_class::integral, ::apache::thrift::type::i64_t>>,
-std::pair<strings::pgInCongestionDiscardSeen_, ChildThriftPath<::std::map<::std::int16_t, bool>, ::facebook::fboss::fsdb::FsdbOperStatsRoot, Self>>>;
+std::pair<strings::pgInCongestionDiscardSeen_, ChildThriftPath<::std::map<::std::int16_t, bool>, ::facebook::fboss::fsdb::FsdbOperStatsRoot, Self>>,
+std::pair<strings::macTransmitQueueMinWatermarkCells_, Child<::std::int64_t, ::apache::thrift::type_class::integral, ::apache::thrift::type::i64_t>>,
+std::pair<strings::macTransmitQueueMaxWatermarkCells_, Child<::std::int64_t, ::apache::thrift::type_class::integral, ::apache::thrift::type::i64_t>>,
+std::pair<strings::macTransmitQueueStuck_, Child<bool, ::apache::thrift::type_class::integral, ::apache::thrift::type::bool_t>>>;
   using ChildrenById = fatal::tuple<   std::pair<std::integral_constant<apache::thrift::field_id_t, 1>, Child<::std::int64_t, ::apache::thrift::type_class::integral, ::apache::thrift::type::i64_t>>,
    std::pair<std::integral_constant<apache::thrift::field_id_t, 2>, Child<::std::int64_t, ::apache::thrift::type_class::integral, ::apache::thrift::type::i64_t>>,
    std::pair<std::integral_constant<apache::thrift::field_id_t, 3>, Child<::std::int64_t, ::apache::thrift::type_class::integral, ::apache::thrift::type::i64_t>>,
@@ -23343,7 +23351,10 @@ std::pair<strings::pgInCongestionDiscardSeen_, ChildThriftPath<::std::map<::std:
    std::pair<std::integral_constant<apache::thrift::field_id_t, 65>, ChildThriftPath<::std::map<::std::int16_t, ::std::int64_t>, ::facebook::fboss::fsdb::FsdbOperStatsRoot, Self>>,
    std::pair<std::integral_constant<apache::thrift::field_id_t, 66>, Child<::std::int64_t, ::apache::thrift::type_class::integral, ::apache::thrift::type::i64_t>>,
    std::pair<std::integral_constant<apache::thrift::field_id_t, 67>, Child<::std::int64_t, ::apache::thrift::type_class::integral, ::apache::thrift::type::i64_t>>,
-   std::pair<std::integral_constant<apache::thrift::field_id_t, 68>, ChildThriftPath<::std::map<::std::int16_t, bool>, ::facebook::fboss::fsdb::FsdbOperStatsRoot, Self>>>;
+   std::pair<std::integral_constant<apache::thrift::field_id_t, 68>, ChildThriftPath<::std::map<::std::int16_t, bool>, ::facebook::fboss::fsdb::FsdbOperStatsRoot, Self>>,
+   std::pair<std::integral_constant<apache::thrift::field_id_t, 69>, Child<::std::int64_t, ::apache::thrift::type_class::integral, ::apache::thrift::type::i64_t>>,
+   std::pair<std::integral_constant<apache::thrift::field_id_t, 70>, Child<::std::int64_t, ::apache::thrift::type_class::integral, ::apache::thrift::type::i64_t>>,
+   std::pair<std::integral_constant<apache::thrift::field_id_t, 71>, Child<bool, ::apache::thrift::type_class::integral, ::apache::thrift::type::bool_t>>>;
   template <typename Name>
   using NameToId = fatal::tuple<std::pair<strings::inBytes_, std::integral_constant<apache::thrift::field_id_t, 1>>,
 std::pair<strings::inUnicastPkts_, std::integral_constant<apache::thrift::field_id_t, 2>>,
@@ -23403,7 +23414,10 @@ std::pair<strings::egressGvoqWatermarkBytes_, std::integral_constant<apache::thr
 std::pair<strings::pgInCongestionDiscards_, std::integral_constant<apache::thrift::field_id_t, 65>>,
 std::pair<strings::pfcDeadlockDetection_, std::integral_constant<apache::thrift::field_id_t, 66>>,
 std::pair<strings::pfcDeadlockRecovery_, std::integral_constant<apache::thrift::field_id_t, 67>>,
-std::pair<strings::pgInCongestionDiscardSeen_, std::integral_constant<apache::thrift::field_id_t, 68>>>::template type_of<Name>;
+std::pair<strings::pgInCongestionDiscardSeen_, std::integral_constant<apache::thrift::field_id_t, 68>>,
+std::pair<strings::macTransmitQueueMinWatermarkCells_, std::integral_constant<apache::thrift::field_id_t, 69>>,
+std::pair<strings::macTransmitQueueMaxWatermarkCells_, std::integral_constant<apache::thrift::field_id_t, 70>>,
+std::pair<strings::macTransmitQueueStuck_, std::integral_constant<apache::thrift::field_id_t, 71>>>::template type_of<Name>;
 
   template <typename Name>
   using TypeFor = typename Children::template type_of<Name>;
@@ -23468,6 +23482,9 @@ std::pair<strings::pgInCongestionDiscardSeen_, std::integral_constant<apache::th
     STRUCT_CHILD_GETTERS(pfcDeadlockDetection_, 66);
     STRUCT_CHILD_GETTERS(pfcDeadlockRecovery_, 67);
     STRUCT_CHILD_GETTERS(pgInCongestionDiscardSeen_, 68);
+    STRUCT_CHILD_GETTERS(macTransmitQueueMinWatermarkCells_, 69);
+    STRUCT_CHILD_GETTERS(macTransmitQueueMaxWatermarkCells_, 70);
+    STRUCT_CHILD_GETTERS(macTransmitQueueStuck_, 71);
 
   template <apache::thrift::field_id_t __id>
   auto operator()(const std::integral_constant<apache::thrift::field_id_t, __id>&) {
@@ -23530,6 +23547,9 @@ std::pair<strings::pgInCongestionDiscardSeen_, std::integral_constant<apache::th
     else if constexpr (__id == 66) { return pfcDeadlockDetection_(); }
     else if constexpr (__id == 67) { return pfcDeadlockRecovery_(); }
     else if constexpr (__id == 68) { return pgInCongestionDiscardSeen_(); }
+    else if constexpr (__id == 69) { return macTransmitQueueMinWatermarkCells_(); }
+    else if constexpr (__id == 70) { return macTransmitQueueMaxWatermarkCells_(); }
+    else if constexpr (__id == 71) { return macTransmitQueueStuck_(); }
   }
 
   template <typename T, T... Values>
