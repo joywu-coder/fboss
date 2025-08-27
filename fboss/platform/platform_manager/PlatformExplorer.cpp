@@ -17,7 +17,6 @@
 #include "fboss/platform/helpers/PlatformFsUtils.h"
 #include "fboss/platform/helpers/PlatformUtils.h"
 #include "fboss/platform/platform_manager/Utils.h"
-#include "fboss/platform/platform_manager/gen-cpp2/platform_manager_config_constants.h"
 #include "fboss/platform/weutil/FbossEepromInterface.h"
 #include "fboss/platform/weutil/IoctlSmbusEepromReader.h"
 
@@ -133,8 +132,6 @@ PlatformManagerStatus createPmStatus(
 }
 } // namespace
 
-namespace constants = platform_manager_config_constants;
-
 PlatformExplorer::PlatformExplorer(
     const PlatformConfig& config,
     std::shared_ptr<PlatformFsUtils> platformFsUtils)
@@ -164,8 +161,11 @@ void PlatformExplorer::explore() {
        *platformConfig_.symbolicLinkToDevicePath()) {
     createDeviceSymLink(linkPath, devicePath);
   }
+  XLOG(INFO) << "Publishing firmware versions ...";
   publishFirmwareVersions();
+  XLOG(INFO) << "Generating human readable EEPROM contents ...";
   genHumanReadableEeproms();
+  XLOG(INFO) << "Publishing hardware version of the unit ...";
   publishHardwareVersions();
   auto explorationStatus = explorationSummary_.summarize();
   updatePmStatus(createPmStatus(
@@ -662,17 +662,22 @@ uint32_t PlatformExplorer::getFpgaInstanceId(
 void PlatformExplorer::createDeviceSymLink(
     const std::string& linkPath,
     const std::string& devicePath) {
-  if (explorationSummary_.isDeviceExpectedToFail(devicePath)) {
-    XLOG(WARNING) << fmt::format(
-        "Device at ({}) is not supported in this hardware. Skipping creating symlink {}",
-        devicePath,
-        linkPath);
-    return;
-  }
   auto linkParentPath = std::filesystem::path(linkPath).parent_path();
   if (!platformFsUtils_->createDirectories(linkParentPath.string())) {
     XLOG(ERR) << fmt::format(
         "Failed to create the parent path ({})", linkParentPath.string());
+    return;
+  }
+
+  const auto [slotPath, deviceName] = Utils().parseDevicePath(devicePath);
+  if (!dataStore_.hasPmUnit(slotPath)) {
+    // We are not adding a new error to ExplorationSummary, as the error
+    // would have already been captured as
+    // ExplorationErrorType::SLOT_PM_UNIT_ABSENCE
+    XLOG(ERR) << fmt::format(
+        "No device at {}. Skipping creating symbolic link for {}",
+        slotPath,
+        devicePath);
     return;
   }
 
@@ -940,7 +945,17 @@ void PlatformExplorer::genHumanReadableEeproms() {
     if (!linkPath.starts_with("/run/devmap/eeproms")) {
       continue;
     }
+
     const auto [slotPath, deviceName] = Utils().parseDevicePath(devicePath);
+
+    if (!dataStore_.hasPmUnit(slotPath)) {
+      XLOG(ERR) << fmt::format(
+          "No device at {}. Skipping creating parsed eeprom content for {}",
+          slotPath,
+          devicePath);
+      continue;
+    }
+
     auto pmUnitConfig = dataStore_.resolvePmUnitConfig(slotPath);
     std::optional<I2cDeviceConfig> matchingConfig;
 
