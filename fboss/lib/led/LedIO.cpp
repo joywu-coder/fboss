@@ -132,6 +132,32 @@ void LedIO::setLed(const std::string& ledBasePath, const std::string& ledOp) {
 }
 
 void LedIO::setBlink(const std::string& ledBasePath, led::Blink blink) {
+  // Set trigger
+  {
+    std::string ledPath = ledBasePath + kLedTriggerPath;
+    std::fstream fs;
+    fs.open(ledPath, std::fstream::out);
+
+    if (fs.is_open()) {
+      if (blink == led::Blink::SLOW || blink == led::Blink::FAST) {
+        fs << kLedTimerTrigger;
+        XLOG(INFO) << fmt::format(
+          "setBlink() timer trigger activate for ID {:d} (0 base)", id_);
+      } else {
+        fs << kLedTimerNoTrigger;
+        XLOG(INFO) << fmt::format(
+          "setBlink() timer trigger deactivate for ID {:d} (0 base)", id_);
+        return;
+      }
+      fs.close();
+    } else {
+      // Not throwing an exception here until all existing BSPs support blinking
+      XLOG(ERR) << fmt::format(
+          "setBlink() failed to open {} for ID {:d} (0 base)", ledPath, id_);
+      return;
+    }
+  }
+
   // Set blink rate
   {
     std::string ledPathOn = ledBasePath + kLedDelayOnPath;
@@ -165,26 +191,6 @@ void LedIO::setBlink(const std::string& ledBasePath, led::Blink blink) {
           ledPathOn,
           ledPathOff,
           id_);
-      return;
-    }
-  }
-  // Set trigger
-  {
-    std::string ledPath = ledBasePath + kLedTriggerPath;
-    std::fstream fs;
-    fs.open(ledPath, std::fstream::out);
-
-    if (fs.is_open()) {
-      if (blink == led::Blink::SLOW || blink == led::Blink::FAST) {
-        fs << kLedTimerTrigger;
-      } else {
-        fs << "";
-      }
-      fs.close();
-    } else {
-      // Not throwing an exception here until all existing BSPs support blinking
-      XLOG(ERR) << fmt::format(
-          "setBlink() failed to open {} for ID {:d} (0 base)", ledPath, id_);
       return;
     }
   }

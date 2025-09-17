@@ -22,6 +22,7 @@ constexpr auto kLedTriggerPath = "/trigger";
 constexpr auto kLedDelayOnPath = "/delay_on";
 constexpr auto kLedDelayOffPath = "/delay_off";
 constexpr auto kLedTimerTrigger = "timer";
+constexpr auto kLedTimerNoTrigger = "none";
 constexpr auto kLedBlinkOff = "0";
 constexpr auto kLedBlinkSlow = "1000";
 constexpr auto kLedBlinkFast = "500";
