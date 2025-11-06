@@ -16,6 +16,7 @@ using facebook::fboss::platform::platform_manager::FanPwmCtrlConfig;
 using facebook::fboss::platform::platform_manager::FpgaIpBlockConfig;
 using facebook::fboss::platform::platform_manager::IdpromConfig;
 using facebook::fboss::platform::platform_manager::LedCtrlConfig;
+using facebook::fboss::platform::platform_manager::PciDeviceConfig;
 using facebook::fboss::platform::platform_manager::PlatformConfig;
 using facebook::fboss::platform::platform_manager::SpiMasterConfig;
 using facebook::fboss::platform::platform_manager::XcvrCtrlConfig;
@@ -43,6 +44,7 @@ class RuntimeConfigBuilder {
       const FpgaIpBlockConfig& auxDev,
       fbiob::AuxDeviceType deviceType);
   fbiob::AuxData createLedAuxData(const LedCtrlConfig& ledCtrl);
+  fbiob::AuxData createGpioAuxData(const FpgaIpBlockConfig& gpioChipConf);
   fbiob::AuxData createXcvrAuxData(const XcvrCtrlConfig& xcvrCtrl);
   fbiob::AuxData createFanAuxData(const FanPwmCtrlConfig& fanCtrl);
   fbiob::AuxData createSpiAuxData(const SpiMasterConfig& spiMaster);
@@ -56,6 +58,9 @@ class RuntimeConfigBuilder {
       const PlatformConfig& pmConfig,
       std::map<std::string, facebook::fboss::platform::bsp_tests::I2CAdapter>&
           adapters);
+  // Create the LED Controller Config based on the given ledCtrlBlockConfigs.
+  std::vector<LedCtrlConfig> createLedCtrlConfigs(
+      const PciDeviceConfig& pciDeviceConfig);
 };
 
 } // namespace facebook::fboss::platform::bsp_tests

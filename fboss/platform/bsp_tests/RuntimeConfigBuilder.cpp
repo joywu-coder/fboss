@@ -1,6 +1,7 @@
 // Copyright (c) Meta Platforms, Inc. and affiliates.
 
 #include "fboss/platform/bsp_tests/RuntimeConfigBuilder.h"
+#include "fboss/platform/platform_manager/Utils.h"
 
 #include <folly/logging/xlog.h>
 #include <thrift/lib/cpp2/protocol/Serializer.h>
@@ -36,6 +37,13 @@ fbiob::AuxData RuntimeConfigBuilder::createLedAuxData(
   ledInfo.portNumber() = *ledCtrl.portNumber();
   ledInfo.ledId() = *ledCtrl.ledId();
   auxData.ledData() = ledInfo;
+
+  return auxData;
+}
+
+fbiob::AuxData RuntimeConfigBuilder::createGpioAuxData(
+    const FpgaIpBlockConfig& gpioChipConf) {
+  auto auxData = createBaseAuxData(gpioChipConf, fbiob::AuxDeviceType::GPIO);
 
   return auxData;
 }
@@ -159,6 +167,37 @@ void RuntimeConfigBuilder::processIdpromDevices(
   }
 }
 
+std::vector<LedCtrlConfig> RuntimeConfigBuilder::createLedCtrlConfigs(
+    const PciDeviceConfig& pciDeviceConfig) {
+  std::vector<LedCtrlConfig> ledCtrlConfigs;
+  const auto ledCtrlConfigBlocks = pciDeviceConfig.ledCtrlBlockConfigs();
+  for (const auto& ledCtrlConfigBlock : *ledCtrlConfigBlocks) {
+    int endPort =
+        *ledCtrlConfigBlock.startPort() + *ledCtrlConfigBlock.numPorts();
+    for (int port = *ledCtrlConfigBlock.startPort(); port < endPort; ++port) {
+      for (int led = 1; led <= ledCtrlConfigBlock.ledPerPort(); ++led) {
+        LedCtrlConfig ledCtrlConfig;
+        ledCtrlConfig.fpgaIpBlockConfig()->pmUnitScopedName() = fmt::format(
+            "{}_PORT_{}_LED_{}",
+            *ledCtrlConfigBlock.pmUnitScopedNamePrefix(),
+            port,
+            led);
+        ledCtrlConfig.fpgaIpBlockConfig()->deviceName() = "port_led";
+        ledCtrlConfig.fpgaIpBlockConfig()->csrOffset() =
+            Utils().computeHexExpression(
+                *ledCtrlConfigBlock.csrOffsetCalc(),
+                port,
+                led,
+                *ledCtrlConfigBlock.startPort());
+        ledCtrlConfig.portNumber() = port;
+        ledCtrlConfig.ledId() = led;
+        ledCtrlConfigs.push_back(ledCtrlConfig);
+      }
+    }
+  }
+  return ledCtrlConfigs;
+}
+
 RuntimeConfig RuntimeConfigBuilder::buildRuntimeConfig(
     const BspTestsConfig& testConfig,
     const PlatformConfig& pmConfig,
@@ -236,8 +275,11 @@ RuntimeConfig RuntimeConfigBuilder::buildRuntimeConfig(
         i2cAdapters[*i2cAdapter.pmName()] = i2cAdapter;
       }
 
-      for (const auto& ledCtrl : *dev.ledCtrlConfigs()) {
+      for (const auto& ledCtrl : createLedCtrlConfigs(dev)) {
         pciDevice.auxDevices()->push_back(createLedAuxData(ledCtrl));
+      }
+      for (const auto& gpioChipConf : *dev.gpioChipConfigs()) {
+        pciDevice.auxDevices()->push_back(createGpioAuxData(gpioChipConf));
       }
       for (const auto& xcvrCtrl : *dev.xcvrCtrlConfigs()) {
         pciDevice.auxDevices()->push_back(createXcvrAuxData(xcvrCtrl));
