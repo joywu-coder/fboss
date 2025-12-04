@@ -1038,6 +1038,7 @@
     "/run/devmap/xcvrs/xcvr_ctrl_9": "/[IOB_XCVR_CTRL_PORT_9]"
   },
   "chassisEepromDevicePath": "/[CHASSIS_EEPROM]",
+  "x86CpuMacEepromDevicePath": "/[CHASSIS_EEPROM]",
   "numXcvrs": 9,
   "bspKmodsRpmName": "fboss_bsp_kmods",
   "bspKmodsRpmVersion": "3.4.0-1",

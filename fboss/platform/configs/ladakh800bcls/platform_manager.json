@@ -1822,6 +1822,7 @@
     "/run/devmap/sensors/SMB_R_VDDCORE": "/SMB_R_SLOT@0/[SMB_R_VDDCORE]"
   },
   "chassisEepromDevicePath": "/[CHASSIS_EEPROM]",
+  "x86CpuMacEepromDevicePath": "/[CHASSIS_EEPROM]",
   "numXcvrs": 2,
   "bspKmodsRpmName": "fboss_bsp_kmods",
   "bspKmodsRpmVersion": "3.4.0-1",

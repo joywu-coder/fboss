@@ -75,10 +75,9 @@ folly::MacAddress MacAddressCheck::getMacAddress(const std::string& interface) {
 }
 
 folly::MacAddress MacAddressCheck::getEepromMacAddress() {
-  auto fruEepromList = weutil::ConfigUtils().getFruEepromList();
+  const auto eeprom_name = weutil::ConfigUtils().getX86CpuMacEepromName();
+  auto eeprom = weutil::ConfigUtils().getFruEeprom(eeprom_name);
 
-  const auto eeprom_name = fruEepromList.contains("SCM") ? "SCM" : "COME";
-  auto eeprom = fruEepromList.at(eeprom_name);
   FbossEepromInterface eepromInterface(eeprom.path, eeprom.offset);
 
   std::string eepromMacStr = (*eepromInterface.getEepromContents().x86CpuMac());

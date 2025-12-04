@@ -658,6 +658,9 @@ struct PlatformConfig {
   // Number of transceivers in the platform.
   17: i16 numXcvrs;
 
+  // X86 CPU MAC EEPROM DevicePath.
+  18: string x86CpuMacEepromDevicePath;
+
   // Name and version of the rpm containing the BSP kmods for this platform
   21: string bspKmodsRpmName;
   22: string bspKmodsRpmVersion;

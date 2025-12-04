@@ -21,6 +21,7 @@ class ConfigUtils {
   std::unordered_map<std::string, FruEeprom> getFruEepromList();
   std::string getChassisEepromName();
   FruEeprom getFruEeprom(const std::string& eepromName);
+  std::string getX86CpuMacEepromName();
 
  private:
   platform_manager::PlatformConfig config_;

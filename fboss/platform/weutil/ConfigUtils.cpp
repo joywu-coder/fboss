@@ -179,4 +179,15 @@ FruEeprom ConfigUtils::getFruEeprom(const std::string& eepromName) {
   auto fruEepromList = getFruEepromList();
   return getFruEepromByName(eepromName, fruEepromList);
 }
+
+std::string ConfigUtils::getX86CpuMacEepromName() {
+  // Get X86CpuMac Eeprom Device Name
+  if (!config_.x86CpuMacEepromDevicePath()->empty()) {
+    std::string x86CpuMacEepromPath =
+        getEepromPath(config_, *config_.x86CpuMacEepromDevicePath());
+    return getEepromName(x86CpuMacEepromPath);
+  } else {
+    throw std::runtime_error("X86CpuMac EEPROM device path not found");
+  }
+}
 } // namespace facebook::fboss::platform::weutil
